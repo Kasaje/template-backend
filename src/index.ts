@@ -1,19 +1,21 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import { apiReference } from "@scalar/express-api-reference";
 
 import { errorMiddleware, validateApiToken } from "./middleware";
 import { connectDB } from "./config";
 
 // Router
 import { authRouter, userRouter } from "./modules";
+import { openApiDocs } from "./docs";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const STAGE = process.env.STAGE;
-const excludedPaths = ["/api/health"];
+const excludedPaths = ["/api/health", "/api/docs"];
 
 const allowedOrigins = ["http://localhost:3000"];
 
@@ -35,6 +37,16 @@ app.use((req, res, next) => {
   if (excludedPaths.includes(req.path)) return next();
   validateApiToken(req, res, next);
 });
+
+// API Documentation route
+app.use(
+  "/api/docs",
+  apiReference({
+    spec: {
+      content: openApiDocs,
+    },
+  }),
+);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
